@@ -1,6 +1,6 @@
 from typing import Tuple, Any, Dict
-from src.models import Observation, Action, Reward
-from src.tasks import generate_task_data
+from models import Observation, Action, Reward
+from tasks import generate_task_data
 
 class FraudEnv:
     def __init__(self, task_level: str = "medium", num_users: int = 10):
