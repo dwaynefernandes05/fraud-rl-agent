@@ -1,11 +1,10 @@
 ---
 title: Fraud Rl Agent
-emoji: 🌖
-colorFrom: purple
-colorTo: gray
+emoji: 📈
+colorFrom: blue
+colorTo: green
 sdk: docker
 pinned: false
-license: mit
+tags:
+  - openenv
 ---
-
-Check out the configuration reference at https://huggingface.co/docs/hub/spaces-config-reference
