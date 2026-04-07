@@ -9,7 +9,7 @@ from src.models import Action
 load_dotenv()
 api_key = os.getenv("HF_TOKEN", os.getenv("OPENAI_API_KEY"))
 base_url = os.getenv("API_BASE_URL", "https://api.openai.com/v1")
-model_name = os.getenv("MODEL_NAME", "llama-3.1-8b-instant") # Swap to your preferred default
+model_name = os.getenv("MODEL_NAME", "gpt-4o-mini") # Swap to your preferred default
 
 if not api_key:
     raise ValueError("HF_TOKEN or OPENAI_API_KEY must be set.")
