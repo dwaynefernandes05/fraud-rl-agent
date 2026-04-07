@@ -1,9 +1,9 @@
 import os
 import json
 from openai import OpenAI
-from src.env import FraudEnv
+from env import FraudEnv
 from dotenv import load_dotenv  
-from src.models import Action
+from models import Action
 
 # Strictly required OpenEnv Variables
 load_dotenv()
