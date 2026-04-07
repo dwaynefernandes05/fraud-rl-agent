@@ -1,0 +1,7 @@
+name: ecomm-return-fraud
+description: Simulates an e-commerce trust & safety queue to evaluate agent triage capabilities.
+version: 1.0.0
+tasks:
+  - easy
+  - medium
+  - hard
