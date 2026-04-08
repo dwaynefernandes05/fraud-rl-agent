@@ -121,10 +121,23 @@ def run_server():
     server.serve_forever()
 
 if __name__ == "__main__":
-    # Run the three required tasks
-    run_evaluation("easy", num_users=5)
-    run_evaluation("medium", num_users=5)
-    run_evaluation("hard", num_users=5)
     
-    # Start the web server to satisfy the autograder ping test
-    run_server()
+    print("[INFO] Warming up network for Phase 2...", flush=True)
+    time.sleep(15) 
+    
+    try:
+        
+        for level in ["easy", "medium", "hard"]:
+            try:
+                run_evaluation(level, num_users=5)
+            except Exception as task_err:
+                print(f"[ERROR] Task {level} failed: {task_err}", flush=True)
+                # Continue to the next task even if one fails
+                continue 
+                
+    except Exception as e:
+        print(f"[ERROR] Critical orchestration failure: {e}", flush=True)
+    
+    finally:
+        
+        run_server()
