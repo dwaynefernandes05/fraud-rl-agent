@@ -1,5 +1,6 @@
 import os
 import json
+import time
 from openai import OpenAI
 from env import FraudEnv
 from dotenv import load_dotenv  
@@ -70,6 +71,8 @@ CRITICAL EXAMPLES FOR ALIGNMENT:
         print(f"[STEP] Action: {action.model_dump()} | Reward: {reward.model_dump()}")
         
         obs = next_obs
+
+        time.sleep(2)
         
     print(f"[END] Task: {task_level} Complete\n")
 
