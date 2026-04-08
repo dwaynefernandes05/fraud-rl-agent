@@ -44,3 +44,20 @@ cd fraud-rl-agent
 pip install uv
 uv lock
 pip install openenv-core python-dotenv openai pydantic
+```
+
+*(Note: Make sure to change `YOUR_USERNAME` in the clone link to your actual username!)*
+
+**Running the Baseline Agent:**
+Ensure you have set your API key in a .env file or environment variable (HF_TOKEN or OPENAI_API_KEY), and set your preferred MODEL_NAME
+
+```bash
+python inference.py
+```
+
+## 📈 Baseline Scores
+* **Easy Task:** 1.00 (5/5 successful policy executions)
+* **Medium Task:** 0.80 (Demonstrates safe degradation to `REVIEW` on missing data)
+* **Hard Task:** 1.00 (Flawless boundary math execution)
+
+## Made by Team CTRL + AI + DELETE 🤖
