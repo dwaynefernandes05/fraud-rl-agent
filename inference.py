@@ -1,14 +1,18 @@
 import os
 import json
 import time
-from http.server import BaseHTTPRequestHandler, HTTPServer
 from openai import OpenAI
 from env import FraudEnv
-from dotenv import load_dotenv  
 from models import Action
 
+# Safe dotenv import in case the judge's container doesn't have it installed
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
+
 # Strictly required OpenEnv Variables
-load_dotenv()
 api_key = os.getenv("HF_TOKEN", os.getenv("OPENAI_API_KEY"))
 base_url = os.getenv("API_BASE_URL", "https://api.openai.com/v1")
 model_name = os.getenv("MODEL_NAME", "gpt-4o-mini") 
@@ -88,43 +92,16 @@ CRITICAL EXAMPLES FOR ALIGNMENT:
     
     print(f"[END] success={str(success).lower()} steps={step_count} score={score:.2f} rewards={rewards_str}", flush=True)
 
-# --- THE FIX: ADD THE SERVER BACK TO KEEP THE CONTAINER ALIVE ---
-class KeepAliveHandler(BaseHTTPRequestHandler):
-    def do_GET(self):
-        self.send_response(200)
-        self.send_header("Content-type", "text/plain")
-        self.end_headers()
-        self.wfile.write(b"Environment is awake and ready.")
-        
-    def do_POST(self):
-        if self.path == '/reset':
-            self.send_response(200)
-            self.send_header("Content-type", "application/json")
-            self.end_headers()
-            self.wfile.write(b'{"status": "reset_successful"}')
-        else:
-            self.send_response(404)
-            self.end_headers()
-
-def run_server():
-    server = HTTPServer(("0.0.0.0", 7860), KeepAliveHandler)
-    print("\n[INFO] Starting keep-alive server on port 7860 for HF Space Ping...", flush=True)
-    server.serve_forever()
 
 if __name__ == "__main__":
     print("[INFO] Warming up network for Phase 2...", flush=True)
-    time.sleep(15) 
+    time.sleep(5) # Reduced sleep to prevent Validator timeout
     
-    try:
-        for level in ["easy", "medium", "hard"]:
-            try:
-                run_evaluation(level, num_users=5)
-            except Exception as task_err:
-                print(f"[ERROR] Task {level} failed: {task_err}", flush=True)
-                continue 
-                
-    except Exception as e:
-        print(f"[ERROR] Critical orchestration failure: {e}", flush=True)
-    finally:
-        # This will hold the script open forever so HF Spaces stays "Green"
-        run_server()
+    for level in ["easy", "medium", "hard"]:
+        try:
+            run_evaluation(level, num_users=5)
+        except Exception as task_err:
+            print(f"[ERROR] Task {level} failed: {task_err}", flush=True)
+            continue 
+            
+    print("[INFO] Evaluation complete. Exiting gracefully.", flush=True)
