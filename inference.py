@@ -11,7 +11,9 @@ from models import Action
 load_dotenv()
 api_key = os.getenv("HF_TOKEN", os.getenv("OPENAI_API_KEY"))
 base_url = os.getenv("API_BASE_URL", "https://api.openai.com/v1")
-model_name = os.getenv("MODEL_NAME", "gpt-4o-mini") # Your HF Secrets should override this to 70B
+model_name = os.getenv("MODEL_NAME", "gpt-4o-mini") # HF Secrets should override this to 70B
+IMAGE_NAME = os.getenv("LOCAL_IMAGE_NAME")
+
 
 if not api_key:
     raise ValueError("HF_TOKEN or OPENAI_API_KEY must be set.")
@@ -19,8 +21,11 @@ if not api_key:
 client = OpenAI(api_key=api_key, base_url=base_url)
 
 def run_evaluation(task_level: str, num_users: int = 5):
-    env = FraudEnv(task_level=task_level, num_users=num_users)
-    obs = env.reset()
+    print(f"[INFO] Attempting to start environment container: {IMAGE_NAME}", flush=True)
+    env = await FraudEnv.from_docker_image(IMAGE_NAME, task_level=task_level, num_users=num_users)
+    
+    # 3. Use await for the OpenEnv async methods
+    obs = await env.reset()
     
     # Strictly formatted [START] log
     print(f"[START] task={task_level} env=openenv_fraud model={model_name}", flush=True)
