@@ -37,15 +37,15 @@ class FraudEnv:
         is_fraud = user["is_fraud"]
         decision = action.decision.strip().upper()
 
-        # Grader Logic: Must be between 0.0 and 1.0
+        # THE FIX: Rewards must be strictly between 0.0 and 1.0 (not 0.0, not 1.0)
         if decision == "REJECT":
-            reward_val, info_text = (1.0, "Correctly rejected fraud") if is_fraud else (0.0, "False positive")
+            reward_val, info_text = (0.99, "Correctly rejected fraud") if is_fraud else (0.01, "False positive")
         elif decision == "APPROVE":
-            reward_val, info_text = (0.0, "False negative") if is_fraud else (1.0, "Correctly approved legit")
+            reward_val, info_text = (0.01, "False negative") if is_fraud else (0.99, "Correctly approved legit")
         elif decision == "REVIEW":
-            reward_val, info_text = (0.5, "Safe review, partial reward")
+            reward_val, info_text = (0.50, "Safe review, partial reward")
         else:
-            reward_val, info_text = (0.0, "Invalid format penalty")
+            reward_val, info_text = (0.01, "Invalid format penalty")
 
         reward = Reward(value=reward_val, reasoning=info_text)
 
