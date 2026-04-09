@@ -1,7 +1,8 @@
 import os
 import json
-import time
+import asyncio
 from http.server import BaseHTTPRequestHandler, HTTPServer
+from threading import Thread
 from openai import OpenAI
 from env import FraudEnv
 from dotenv import load_dotenv  
@@ -14,17 +15,19 @@ base_url = os.getenv("API_BASE_URL", "https://api.openai.com/v1")
 model_name = os.getenv("MODEL_NAME", "gpt-4o-mini") # HF Secrets should override this to 70B
 IMAGE_NAME = os.getenv("LOCAL_IMAGE_NAME")
 
-
 if not api_key:
     raise ValueError("HF_TOKEN or OPENAI_API_KEY must be set.")
 
+# Synchronous OpenAI client is fine here as it will just briefly pause the async loop during the API call
 client = OpenAI(api_key=api_key, base_url=base_url)
 
-def run_evaluation(task_level: str, num_users: int = 5):
-    print(f"[INFO] Attempting to start environment container: {IMAGE_NAME}", flush=True)
+async def run_evaluation(task_level: str, num_users: int = 5):
+    print(f"[INFO] Attempting to start environment container: {IMAGE_NAME} for task: {task_level}", flush=True)
+    
+    # 1. MANDATORY: Initialize via Docker to satisfy Phase 2 Orchestration
     env = await FraudEnv.from_docker_image(IMAGE_NAME, task_level=task_level, num_users=num_users)
     
-    # 3. Use await for the OpenEnv async methods
+    # 2. Reset must be awaited
     obs = await env.reset()
     
     # Strictly formatted [START] log
@@ -34,7 +37,8 @@ def run_evaluation(task_level: str, num_users: int = 5):
     rewards_list = []
     
     while True:
-        state = env.state()
+        # 3. State must be awaited
+        state = await env.state()
         if state["is_done"]:
             break
             
@@ -77,7 +81,9 @@ CRITICAL EXAMPLES FOR ALIGNMENT:
             decision = "REVIEW"
 
         action = Action(decision=decision)
-        next_obs, reward, done, info = env.step(action)
+        
+        # 4. Step must be awaited
+        next_obs, reward, done, info = await env.step(action)
         
         rewards_list.append(reward.value)
         
@@ -86,8 +92,8 @@ CRITICAL EXAMPLES FOR ALIGNMENT:
         
         obs = next_obs
 
-        # Rate Limit bumper
-        time.sleep(2)
+        # Rate Limit bumper (use asyncio.sleep in async functions)
+        await asyncio.sleep(2)
         
         if done:
             break
@@ -125,24 +131,23 @@ def run_server():
     print("\n[INFO] Starting keep-alive server on port 7860 for HF Space Ping...", flush=True)
     server.serve_forever()
 
-if __name__ == "__main__":
-    
+# --- MAIN ASYNC ORCHESTRATION ---
+async def main():
     print("[INFO] Warming up network for Phase 2...", flush=True)
-    time.sleep(15) 
+    # 15-second buffer to let the Phase 2 Docker daemon initialize the sidecar container
+    await asyncio.sleep(15) 
     
-    try:
-        
-        for level in ["easy", "medium", "hard"]:
-            try:
-                run_evaluation(level, num_users=5)
-            except Exception as task_err:
-                print(f"[ERROR] Task {level} failed: {task_err}", flush=True)
-                # Continue to the next task even if one fails
-                continue 
-                
-    except Exception as e:
-        print(f"[ERROR] Critical orchestration failure: {e}", flush=True)
+    for level in ["easy", "medium", "hard"]:
+        try:
+            await run_evaluation(level, num_users=5)
+        except Exception as task_err:
+            print(f"[ERROR] Task {level} failed: {task_err}", flush=True)
+
+if __name__ == "__main__":
+    # 1. Start the keep-alive server in a background thread so it NEVER blocks the AI logic
+    # This guarantees the Phase 1 Ping will always succeed
+    server_thread = Thread(target=run_server, daemon=True)
+    server_thread.start()
     
-    finally:
-        
-        run_server()
+    # 2. Kick off the asynchronous evaluation loop
+    asyncio.run(main())
