@@ -7,5 +7,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-# Validates and runs the required inference script
-CMD ["python", "inference.py"]
+CMD ["python", "server/app.py"]
