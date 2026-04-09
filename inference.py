@@ -42,11 +42,13 @@ def run_evaluation(task_level: str, num_users: int = 5):
         
         system_prompt = """You are an elite fraud detection agent. 
 Respond ONLY with a JSON object containing a single key "decision" with value "APPROVE", "REJECT", or "REVIEW".
+
 EVALUATE THESE RULES IN EXACT ORDER:
 Rule 1: If linked_accounts is strictly greater than 3, you MUST output "REJECT".
 Rule 2: If return_rate > 0.70 AND account_age_days < 60, you MUST output "REJECT".
 Rule 3: If any value is null AND return_rate > 0.60, you MUST output "REVIEW".
 Rule 4: If NONE of the above rules are broken, you MUST output "APPROVE".
+
 CRITICAL EXAMPLES FOR ALIGNMENT:
 - Obs: {"return_rate": 0.0, "account_age_days": 270, "linked_accounts": 1}
   Decision: "APPROVE" (Breaks no rules. Must use Rule 4).
